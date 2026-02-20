@@ -62,12 +62,13 @@ export const BatteryModel = (props: any) => {
           {/* Advanced Glass Material */}
           <MeshTransmissionMaterial 
             backside
-            samples={8} // Higher quality
+            samples={4} // Optimize model quality
+            resolution={512} // Limit resolution
             thickness={0.8}
-            chromaticAberration={0.06} // Prism effect
+            chromaticAberration={0.02} // Prism effect
             anisotropy={0.1}
             distortion={0.2}
-            distortionScale={0.3}
+            distortionScale={0.1}
             temporalDistortion={0.1}
             ior={1.52}
             color="#e0f2fe" // Slight blue tint
