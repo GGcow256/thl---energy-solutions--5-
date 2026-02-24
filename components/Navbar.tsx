@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigation } from '../context/NavigationContext';
@@ -14,16 +15,27 @@ export const Navbar: React.FC = () => {
   const handleLinkClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
     setIsOpen(false);
-    // Cast string to Page type safely
     navigateTo(href as any); 
   };
+
+  // 优化体验：菜单打开时锁定背景，禁止用户在底层滚动
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4">
       <div className="max-w-7xl mx-auto">
         <div className="relative flex justify-between items-center">
           
-          {/* Logo Container - Click to go home */}
+          {/* Logo Container */}
           <motion.div 
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -38,9 +50,8 @@ export const Navbar: React.FC = () => {
              />
           </motion.div>
 
-          {/* Desktop Nav - Clean Rectangle */}
+          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1 bg-white/90 backdrop-blur-md px-6 py-3 border border-white/40 shadow-sm relative">
-             {/* Decorative line top */}
              <div className="absolute top-0 left-0 w-full h-[2px] bg-thl-blue/10" />
 
             {t.items.map((item, index) => (
@@ -54,7 +65,6 @@ export const Navbar: React.FC = () => {
                 className="relative px-4 py-1 text-sm font-semibold text-thl-text hover:text-thl-blue transition-colors group cursor-pointer"
               >
                 <span className="relative z-10">{item.label}</span>
-                {/* Hover Underline */}
                 <motion.div 
                   className="absolute bottom-0 left-0 w-full h-0.5 bg-thl-blue origin-center scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
                 />
@@ -70,7 +80,6 @@ export const Navbar: React.FC = () => {
                className="relative px-5 py-1.5 bg-thl-blue text-white text-xs font-bold hover:bg-thl-text transition-all duration-300 cursor-pointer"
             >
               <span>{t.langButton}</span>
-              {/* Language Button Faster Water Background */}
               <motion.div 
                 className="absolute top-1 left-1 w-full h-full border border-thl-blue/50 -z-10"
                 animate={{ 
@@ -87,40 +96,64 @@ export const Navbar: React.FC = () => {
             </motion.button>
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* 原先的移动端汉堡菜单按钮 */}
           <button 
             className="md:hidden text-thl-text bg-white/80 p-2 border border-gray-200 backdrop-blur z-20"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => setIsOpen(true)}
           >
-            {isOpen ? <X size={32} /> : <Menu size={32} />}
+            <Menu size={32} />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, x: '100%' }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: '100%' }}
-          className="fixed inset-0 bg-white/95 backdrop-blur-xl z-10 flex items-center justify-center"
-        >
-          <div className="flex flex-col items-center gap-8">
-            {t.items.map((item) => (
-              <a 
-                key={item.label} 
-                href={`#${item.href}`}
-                className="text-2xl font-bold text-thl-text hover:text-thl-blue transition-all cursor-pointer"
-                onClick={(e) => handleLinkClick(e, item.href)}
+      {/* Mobile Menu Overlay - 使用 Portal 挂载到 body，确保绝对参照浏览器屏幕视口 */}
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: '-10px' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '-10px' }}
+              transition={{ duration: 0.3 }}
+              // 强制高度为 100dvh，无论多长的页面都只占据当前屏幕大小
+              className="fixed top-0 left-0 w-full h-[100dvh] bg-white/95 backdrop-blur-xl z-[9999] flex flex-col items-center justify-center"
+            >
+              {/* 独立的关闭按钮，保持在原来的右上角位置 */}
+              <button 
+                className="absolute top-4 right-6 text-thl-text bg-white/80 p-2 border border-gray-200 backdrop-blur z-50 rounded-md"
+                onClick={() => setIsOpen(false)}
               >
-                {item.label}
-              </a>
-            ))}
-            <button onClick={() => { toggleLanguage(); setIsOpen(false); }} className="mt-8 text-thl-blue border-b border-thl-blue pb-1 font-bold">
-              {t.langButton}
-            </button>
-          </div>
-        </motion.div>
+                <X size={32} />
+              </button>
+
+              <div className="flex flex-col items-center gap-8 w-full px-6">
+                {t.items.map((item, index) => (
+                  <motion.a 
+                    key={item.label} 
+                    href={`#${item.href}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="text-2xl font-bold text-thl-text hover:text-thl-blue transition-all cursor-pointer text-center w-full"
+                    onClick={(e) => handleLinkClick(e, item.href)}
+                  >
+                    {item.label}
+                  </motion.a>
+                ))}
+                <motion.button 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: t.items.length * 0.05 }}
+                  onClick={() => { toggleLanguage(); setIsOpen(false); }} 
+                  className="mt-8 text-xl text-thl-blue border-b-2 border-thl-blue pb-1 font-bold"
+                >
+                  {t.langButton}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </nav>
   );

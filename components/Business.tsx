@@ -23,85 +23,91 @@ export const Business: React.FC = () => {
   const opacityHero = useTransform(scrollY, [0, 400], [1, 0]);
 
   useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      ScrollTrigger.getAll().forEach(t => t.kill());
+    let ctx: gsap.Context;
 
-      // 获取两个图层容器
-      const founders = document.querySelector('.founders-stack');
-      const rd = document.querySelector('.rd-stack');
-      const track = trackRef.current;
+    // --- 核心修复：添加延迟，等待路由跳转的 window.scrollTo(0, 0) 和页面过渡动画彻底完成 ---
+    const timer = setTimeout(() => {
+      ctx = gsap.context(() => {
+        // 先清理可能残余的触发器
+        ScrollTrigger.getAll().forEach(t => t.kill());
 
-      if (track && founders && rd) {
-        
-        // =========================================================
-        // 1. 初始状态 (Initial State) - 严格复刻 Codrops 参数
-        // =========================================================
-        
-        // 创始团队：完全展开，轴心在左下角 (0% 100%)
-        // 准备做一个向后的折叠动作
-        gsap.set(founders, { 
-          scale: 1, 
-          rotationX: 0,
-          rotationY: 0,
-          filter: 'brightness(1)',
-          opacity: 1,
-          transformOrigin: "0% 100%" // 关键：左下角轴心
-        });
+        // 获取两个图层容器
+        const founders = document.querySelector('.founders-stack');
+        const rd = document.querySelector('.rd-stack');
+        const track = trackRef.current;
 
-        // 研发团队：完全折叠，轴心在右上角 (100% 0%)
-        // 准备做一个向前的展开动作
-        gsap.set(rd, { 
-          scale: 0, 
-          rotationX: 10,  // 初始稍微仰一点
-          rotationY: 70,  // 初始侧转 70度
-          filter: 'brightness(0.2)', // 暗色
-          opacity: 0,
-          transformOrigin: "100% 0%" // 关键：右上角轴心
-        });
+        if (track && founders && rd) {
+          
+          // =========================================================
+          // 1. 初始状态 (Initial State) 
+          // =========================================================
+          
+          // 创始团队：完全展开，轴心在左下角 (0% 100%)
+          gsap.set(founders, { 
+            scale: 1, 
+            rotationX: 0,
+            rotationY: 0,
+            filter: 'brightness(1)',
+            opacity: 1,
+            transformOrigin: "0% 100%" 
+          });
 
-        // =========================================================
-        // 2. 动画序列 (Timeline) - 绑定滚动条
-        // =========================================================
-        
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: track,        
-            start: "top top",      
-            end: "bottom bottom",  
-            scrub: 1, // 增加阻尼感，让 3D 旋转更重、更有质感
-          }
-        });
+          // 研发团队：完全折叠，轴心在右上角 (100% 0%)
+          gsap.set(rd, { 
+            scale: 0, 
+            rotationX: 10,  
+            rotationY: 70,  
+            filter: 'brightness(0.2)', 
+            opacity: 0,
+            transformOrigin: "100% 0%" 
+          });
 
-        // 第一步：创始团队折叠离场 (Founders Fold Out)
-        // 效果：原地缩小并向后翻转，像书页一样合上
-        tl.to(founders, {
-          scale: 0,           // 缩放到 0
-          rotationX: 10,      // 微微仰头
-          rotationY: 70,      // 侧转 70度
-          filter: 'brightness(0.2)', // 变暗
-          opacity: 0,
-          ease: "none",       // 线性动画，完全跟随滚动
-          duration: 1 
-        });
+          // =========================================================
+          // 2. 动画序列 (Timeline) - 绑定滚动条
+          // =========================================================
+          
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: track,        
+              start: "top top",      
+              end: "bottom bottom",  
+              scrub: 1, 
+              invalidateOnRefresh: true, // 核心修复：强制在刷新或滚动重置时重新计算起点
+            }
+          });
 
-        // 第二步：研发团队展开入场 (R&D Unfold In)
-        // 效果：从折叠状态原地放大并回正
-        // "<" 表示和上一个动画同时开始，实现无缝衔接
-        tl.to(rd, {
-          scale: 1,           // 恢复原大
-          rotationX: 0,       // 回正
-          rotationY: 0,       // 回正
-          filter: 'brightness(1)', // 变亮
-          opacity: 1,
-          ease: "none",
-          duration: 1
-        }, "<"); 
-      }
+          // 第一步：创始团队折叠离场 
+          tl.to(founders, {
+            scale: 0,           
+            rotationX: 10,      
+            rotationY: 70,      
+            filter: 'brightness(0.2)', 
+            opacity: 0,
+            ease: "none",       
+            duration: 1 
+          });
 
-    }, containerRef);
+          // 第二步：研发团队展开入场 
+          tl.to(rd, {
+            scale: 1,           
+            rotationX: 0,       
+            rotationY: 0,       
+            filter: 'brightness(1)', 
+            opacity: 1,
+            ease: "none",
+            duration: 1
+          }, "<"); 
+        }
 
-    ScrollTrigger.refresh();
-    return () => ctx.revert();
+        // 初始化完成后强制重新计算所有的滚动触发点
+        ScrollTrigger.refresh();
+      }, containerRef);
+    }, 300); // 延迟 300ms 避开布局抖动期
+
+    return () => {
+      clearTimeout(timer);
+      if (ctx) ctx.revert();
+    };
   }, [language]);
 
   return (
@@ -116,7 +122,6 @@ export const Business: React.FC = () => {
           <img 
             src={t.hero.image} 
             alt="Business Hero" 
-            // Changed brightness from 0.6 to 0.9 to let the AI image shine, rely on gradient for text contrast
             className="w-full h-full object-cover filter brightness-[0.9]"
           />
         </motion.div>
@@ -207,7 +212,6 @@ export const Business: React.FC = () => {
          <div 
            ref={cameraRef}
            className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center"
-           // 必须开启父容器的透视效果，否则 rotationY 只是压扁而不是 3D 旋转
            style={{ perspective: '1200px' }} 
          >
              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none" />
@@ -216,7 +220,6 @@ export const Business: React.FC = () => {
              <div className="w-full max-w-7xl px-6 grid grid-cols-1 grid-rows-1 place-items-center">
 
                 {/* --- LAYER 1: FOUNDERS (Exit Animation) --- */}
-                {/* 增加 backface-visibility 避免旋转时闪烁 */}
                 <div className="founders-stack col-start-1 row-start-1 w-full flex flex-col items-center z-20 will-change-transform" style={{ backfaceVisibility: 'hidden' }}>
                     <div className="text-center mb-12">
                       <span className="text-thl-blue font-bold tracking-[0.3em] uppercase text-sm mb-4 block">Leadership</span>
