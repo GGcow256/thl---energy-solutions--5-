@@ -58,9 +58,9 @@ export const Contact: React.FC = () => {
     
     setIsSubmitting(true);
     
-    const serviceID = 'service_yqscvn5';   
-    const templateID = 'template_049md7q'; 
-    const publicKey = '0nzyNVyq3RqP23MiN';   
+    const serviceID = 'your_serviceID';   
+    const templateID = 'your_templateID'; 
+    const publicKey = 'your_publicKey';   
 
     // 组织需要发送给邮箱的数据变量
     const templateParams = {
