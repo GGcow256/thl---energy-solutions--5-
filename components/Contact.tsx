@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
-import { useNavigation } from '../context/NavigationContext'; // Added import
+import { useNavigation } from '../context/NavigationContext';
 import { content } from '../data/content';
 import { TextReveal } from './ui/TextReveal';
 import { ArrowDown, Send, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from './ui/GlassCard';
+// 引入 emailjs
+import emailjs from '@emailjs/browser';
 
 export const Contact: React.FC = () => {
   const { language } = useLanguage();
-  const { navigateTo } = useNavigation(); // Get navigateTo
+  const { navigateTo } = useNavigation(); 
   const t = content[language].contact;
   
   const [formData, setFormData] = useState({
@@ -44,20 +46,49 @@ export const Contact: React.FC = () => {
   };
 
   const handlePrivacyLinkClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents the click from reaching the label (which toggles checkbox)
-    e.preventDefault();  // Prevents any default browser action
+    e.stopPropagation(); 
+    e.preventDefault();  
     navigateTo('privacy');
   };
 
+  // --- 核心修改：接入 EmailJS ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.privacy) return;
     
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+    
+    const serviceID = 'service_yqscvn5';   
+    const templateID = 'template_049md7q'; 
+    const publicKey = '0nzyNVyq3RqP23MiN';   
+
+    // 组织需要发送给邮箱的数据变量
+    const templateParams = {
+      type: formData.type === 'personal' ? '个人' : '企业',
+      company: formData.company || '未填写',
+      department: formData.department || '未填写',
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      interest: formData.interest.length > 0 ? formData.interest.join(', ') : '未选择',
+      message: formData.message || '未填写留言',
+    };
+
+    try {
+      // 发送邮件请求
+      await emailjs.send(serviceID, templateID, templateParams, publicKey);
+      
+      console.log('邮件发送成功!');
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+      
+      // 可选：重置表单内容
+      // setFormData({ type: 'corporate', company: '', department: '', name: '', email: '', phone: '', interest: [], message: '', privacy: false });
+    } catch (error) {
+      console.error('发送邮件失败:', error);
+      setIsSubmitting(false);
+      alert(language === 'cn' ? '发送失败，请稍后重试或检查网络设置。' : '送信に失敗しました。後でもう一度お試しください。');
+    }
   };
 
   return (

@@ -15,6 +15,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1k-bNIKurJchKxQo8k-7d6t
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+   `npm install @emailjs/browser`
+2. Set the serviceID, templateID, and publicKey (obtained from EmailJS) in components/contact.tsx (lines 61-63)
 3. Run the app:
    `npm run dev`
