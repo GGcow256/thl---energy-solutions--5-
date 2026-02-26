@@ -10,7 +10,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('cn');
+  const [language, setLanguage] = useState<Language>('jp');
 
   const toggleLanguage = () => {
     setLanguage((prev) => (prev === 'cn' ? 'jp' : 'cn'));

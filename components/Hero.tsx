@@ -1,4 +1,3 @@
-
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { PerspectiveCamera, Environment, ContactShadows, Stars, Grid } from '@react-three/drei';
@@ -171,7 +170,7 @@ export const Hero: React.FC = () => {
     {
       id: 'business',
       label: 'Business',
-      title: t.business.philosophy.title, 
+      title: language === 'cn' ? '公司简介' : '企業情報', 
       subtitle: 'Corporate Philosophy',
       desc: t.business.philosophy.items[0].desc,
       btn: language === 'cn' ? '了解业务' : '事業紹介',
@@ -180,7 +179,7 @@ export const Hero: React.FC = () => {
     {
       id: 'products',
       label: 'Products',
-      title: language === 'cn' ? '核心技术' : 'コア技術',
+      title: language === 'cn' ? '产品介绍' : '製品情報',
       subtitle: 'Advanced Battery Tech',
       desc: t.homeProducts.items[0].description,
       btn: language === 'cn' ? '查看产品' : '製品一覧',
@@ -189,7 +188,7 @@ export const Hero: React.FC = () => {
     {
       id: 'news',
       label: 'News',
-      title: t.news.title, 
+      title: language === 'cn' ? '公司动态' : 'ニュース', 
       subtitle: 'Global Updates',
       desc: t.news.items[0].content,
       btn: language === 'cn' ? '阅读新闻' : 'ニュースを読む',
@@ -198,7 +197,7 @@ export const Hero: React.FC = () => {
     {
       id: 'sustainability',
       label: 'SDGs',
-      title: language === 'cn' ? '可持续未来' : '持続可能な未来',
+      title: language === 'cn' ? '可持续发展' : 'サステナビリティ',
       subtitle: 'Green Energy',
       desc: t.sustainability.sections[0].content.substring(0, 50) + '...',
       btn: language === 'cn' ? '可持续发展' : 'サステナビリティ',
@@ -207,7 +206,7 @@ export const Hero: React.FC = () => {
     {
       id: 'contact',
       label: 'Contact',
-      title: t.contact.hero.title, 
+      title: language === 'cn' ? '联系我们' : 'お問い合わせ', 
       subtitle: 'Get in Touch',
       desc: language === 'cn' ? '准备好开启您的能源转型之旅了吗？' : 'エネルギー変革の旅を始める準備はできましたか？',
       btn: language === 'cn' ? '联系我们' : 'お問い合わせ',
@@ -322,7 +321,8 @@ export const Hero: React.FC = () => {
                            {section.desc}
                         </p>
 
-                        <div className="pointer-events-auto inline-block">
+                        {/* 核心修复：只在当前激活的面版开启指针事件 */}
+                        <div className={`inline-block ${isActive ? 'pointer-events-auto' : 'pointer-events-none'}`}>
                            <THLButton 
                               text={section.btn} 
                               onClick={section.action} 
@@ -335,7 +335,7 @@ export const Hero: React.FC = () => {
               })}
 
               {/* Progress Indicator */}
-              <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end">
+              <div className="absolute bottom-12 left-6 right-6 flex justify-between items-end pointer-events-none">
                   <div className="flex flex-col gap-2">
                      <span className="text-xs font-mono text-slate-500 tracking-widest">SCROLL PROGRESS</span>
                      <div className="w-48 h-1 bg-slate-300 rounded-full overflow-hidden">
